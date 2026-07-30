@@ -1,6 +1,6 @@
 {
-  "name": "@asirihewage/git-explain",
-  "version": "1.0.4",
+  "name": "git-explain",
+  "version": "1.0.5",
   "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
   "bin": {
     "git-explain": "bin/git-explain.js"
@@ -17,12 +17,7 @@
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "test": "vitest",
-    "prepublishOnly": "npm run build",
-    "publish:npm": "npm publish --registry=https://registry.npmjs.org/",
-    "publish:github": "npm publish"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=18"

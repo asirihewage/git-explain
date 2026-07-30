@@ -7,7 +7,7 @@ Instead of `+520 -380`, git-explain tells you _what actually changed_, infers _w
 ## Installation
 
 ```bash
-npm install -g @asirihewage/git-explain
+npm install -g git-explain
 ```
 
 ## Quick Start
@@ -33,17 +33,17 @@ Offline models (DeepSeek V4 Flash, Qwen3-Coder) are downloaded automatically via
 ## Usage
 
 ```bash
-npx @asirihewage/git-explain              # Full analysis of working tree changes
-npx @asirihewage/git-explain --staged     # Staged changes
-npx @asirihewage/git-explain HEAD         # Last commit
-npx @asirihewage/git-explain abc1234      # Specific commit hash
+git-explain                    # Full analysis of working tree changes
+git-explain --staged           # Staged changes
+git-explain HEAD               # Last commit
+git-explain abc1234            # Specific commit hash
 
-npx @asirihewage/git-explain -m           # Commit message only
-npx @asirihewage/git-explain -r           # Risk analysis only
+git-explain -m                 # Commit message only
+git-explain -r                 # Risk analysis only
 
-npx @asirihewage/git-explain --offline    # Force offline mode
-npx @asirihewage/git-explain --model qwen3-coder:latest
-npx @asirihewage/git-explain --setup      # Re-run setup wizard
+git-explain --offline          # Force offline mode
+git-explain --model qwen3-coder:latest
+git-explain --setup            # Re-run setup wizard
 ```
 
 ## Sample Output
