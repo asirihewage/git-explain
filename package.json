@@ -1,6 +1,6 @@
 {
     "name":  "git-explain",
-    "version":  "1.0.7",
+    "version":  "1.0.8",
     "description":  "AI-powered Git change explanations — understand what changed, why, and the risks",
     "bin":  {
                 "git-explain":  "bin/git-explain.js"
@@ -10,6 +10,7 @@
                   "dist",
                   "!dist/__tests__",
                   "bin",
+                  "scripts",
                   "README.md",
                   "LICENSE"
               ],
@@ -17,7 +18,8 @@
                     "build":  "tsc",
                     "dev":  "tsx src/index.ts",
                     "test":  "vitest",
-                    "prepublishOnly":  "npm run build"
+                    "prepublishOnly":  "npm run build",
+                    "postinstall":  "node scripts/postinstall.js"
                 },
     "engines":  {
                     "node":  "\u003e=18"
