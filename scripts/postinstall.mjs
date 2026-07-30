@@ -1,11 +1,10 @@
-// Skip during local development (running npm install in the repo itself)
+import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
+
 try {
-  const { resolve } = await import("node:path");
-  const { readFileSync } = await import("node:fs");
   const local = JSON.parse(
     readFileSync(resolve(process.cwd(), "package.json"), "utf-8"),
   );
-  // If the local package is git-explain itself, skip
   if (local.name === "git-explain" && local.version) {
     process.exit(0);
   }
