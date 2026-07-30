@@ -59,6 +59,71 @@ git-explain --setup            # Re-run setup wizard
 | PR Description | 3-5 sentence PR summary |
 | Test Cases | Specific test scenarios to cover |
 
+## Example
+
+Running `git-explain --staged` on the git-explain project itself:
+
+```
+  Files: 7   +36 / -51
+
+  Change Analysis
+──────────────────────────────────────────────────
+
+  📌  Summary
+
+    Switches the default AI model from deepseek-v4-flash
+    to qwen3-coder, improves Ollama type safety, refactors
+    git diff parsing, removes unused dependency resolution,
+    and separates .npmrc from version control.
+
+  🎯  Why This Change Was Made
+
+    The primary motivation is switching the default AI model
+    to qwen3-coder for better availability. Supporting changes
+    improve type safety, fix a bug where staged diff stats
+    were incorrectly calculated, and clean up configuration
+    management by adding .npmrc to .gitignore.
+
+  ⚠️  Potential Regressions
+
+    - Users expecting deepseek-v4-flash by default may
+      need to manually configure it
+    - The refactored ensureModel() could behave differently
+      if the Ollama API response structure changes
+    - Modified parseDiffResult may have edge cases in
+      complex Git scenarios
+
+  🔗  Affected Modules
+
+    - src/config.ts — Default model change
+    - src/context.ts — Removed unused dependency resolution
+    - src/git.ts — Fixed staged diff stats calculation
+    - src/llm/ollama.ts — Enhanced type safety
+    - src/setup.ts — Updated model selection defaults
+    - .gitignore / .npmrc.example — Config separation
+
+  💾  Suggested Commit Message
+
+    feat: switch default model to qwen3-coder and
+    improve Ollama integration
+
+  📝  PR Description
+
+    This PR switches the default AI model from
+    deepseek-v4-flash to qwen3-coder, refactors the
+    Ollama provider for better type safety, fixes staged
+    diff statistics, removes unused code, and separates
+    .npmrc from version control for security.
+
+  🧪  Test Cases
+
+    1. Verify qwen3-coder is set as default in config
+    2. Test setup wizard initializes with correct default
+    3. Validate Ollama model existence checking
+    4. Ensure git diff stats work for staged + unstaged
+    5. Confirm .npmrc.example contains correct config
+```
+
 ## Configuration
 
 Config is stored at `~/.git-explain/config.json`. Environment variables override at runtime:

@@ -1,6 +1,14 @@
 import { execSync } from "node:child_process";
 import type { LLMProvider } from "./index.js";
 
+interface TagsResponse {
+  models?: { name: string }[];
+}
+
+interface ChatResponse {
+  message: { content: string };
+}
+
 export class OllamaProvider implements LLMProvider {
   readonly modelName: string;
   private baseUrl: string;
@@ -16,9 +24,9 @@ export class OllamaProvider implements LLMProvider {
 
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`);
-      const data = await res.json();
+      const data: TagsResponse = await res.json();
       const exists = data.models?.some(
-        (m: { name: string }) => m.name === this.modelName,
+        (m) => m.name === this.modelName,
       );
       if (exists) {
         this.ready = true;
@@ -63,7 +71,7 @@ export class OllamaProvider implements LLMProvider {
       throw new Error(`Ollama error ${res.status}: ${body}`);
     }
 
-    const data = await res.json();
+    const data: ChatResponse = await res.json();
     return data.message.content;
   }
 }

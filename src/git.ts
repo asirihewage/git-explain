@@ -8,12 +8,12 @@ export interface DiffResult {
 
 export function getWorkingTreeDiff(): DiffResult {
   const diff = execFileSync("git", ["diff", "--unified=10"], { encoding: "utf-8" });
-  return parseDiffResult(diff, "");
+  return parseDiffResult(diff, "", false);
 }
 
 export function getStagedDiff(): DiffResult {
   const diff = execFileSync("git", ["diff", "--staged", "--unified=10"], { encoding: "utf-8" });
-  return parseDiffResult(diff, "");
+  return parseDiffResult(diff, "", true);
 }
 
 export function getCommitDiff(commit: string): DiffResult {
@@ -23,26 +23,28 @@ export function getCommitDiff(commit: string): DiffResult {
   const commitInfo = headerEnd === -1 ? output.trim() : output.slice(0, headerEnd).trim();
   const diff = headerEnd === -1 ? "" : output.slice(headerEnd + 1);
 
-  return parseDiffResult(diff, commitInfo);
+  return parseDiffResult(diff, commitInfo, false);
 }
 
-function parseDiffResult(diff: string, commitInfo: string): DiffResult {
-  const statArgs = diff ? ["diff", "--stat"] : ["diff", "--stat"];
-  let statsOutput: string;
-  try {
-    statsOutput = diff
-      ? execFileSync("git", [...statArgs], { encoding: "utf-8" })
-      : "";
-  } catch {
+function parseDiffResult(diff: string, commitInfo: string, staged: boolean): DiffResult {
+  if (!diff.trim()) {
     return { diff, stats: { files: 0, insertions: 0, deletions: 0 }, commitInfo };
   }
 
-  const lines = statsOutput.trim().split("\n").filter((l) => l.trim());
-  const lastLine = lines[lines.length - 1] || "";
+  const args = ["diff", "--stat"];
+  if (staged) args.push("--staged");
 
-  const fileCount = parseInt(lastLine.match(/(\d+) files? changed/)?.[1] || "0");
-  const insertions = parseInt(lastLine.match(/(\d+) insertion/)?.[1] || "0");
-  const deletions = parseInt(lastLine.match(/(\d+) deletion/)?.[1] || "0");
+  try {
+    const statsOutput = execFileSync("git", args, { encoding: "utf-8" });
+    const lines = statsOutput.trim().split("\n").filter((l) => l.trim());
+    const lastLine = lines[lines.length - 1] || "";
 
-  return { diff, stats: { files: fileCount, insertions, deletions }, commitInfo };
+    const fileCount = parseInt(lastLine.match(/(\d+) files? changed/)?.[1] || "0");
+    const insertions = parseInt(lastLine.match(/(\d+) insertion/)?.[1] || "0");
+    const deletions = parseInt(lastLine.match(/(\d+) deletion/)?.[1] || "0");
+
+    return { diff, stats: { files: fileCount, insertions, deletions }, commitInfo };
+  } catch {
+    return { diff, stats: { files: 0, insertions: 0, deletions: 0 }, commitInfo };
+  }
 }

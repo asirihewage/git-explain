@@ -19,7 +19,7 @@ const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 const DEFAULTS: Config = {
   mode: "offline",
   provider: "ollama",
-  model: "deepseek-v4-flash:latest",
+  model: "qwen3-coder:latest",
   ollamaUrl: "http://localhost:11434",
   apiKeys: { openai: "", anthropic: "" },
 };

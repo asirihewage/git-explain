@@ -53,30 +53,4 @@ function getFileHistories(files: string[]): string {
   return parts.join("\n\n");
 }
 
-export function getFileDependencies(files: string[]): string {
-  if (files.length === 0) return "";
-  const parts: string[] = [];
 
-  for (const file of files.slice(0, 5)) {
-    try {
-      const content = execFileSync("git", ["show", `HEAD:${file}`], {
-        encoding: "utf-8",
-        timeout: 3000,
-      });
-      const imports: string[] = [];
-      for (const line of content.split("\n")) {
-        const m = line.match(
-          /(?:import|require)\s+.*?['"]([^'"]+)['"]/,
-        );
-        if (m) imports.push(m[1]);
-      }
-      if (imports.length > 0) {
-        parts.push(`# ${file} depends on:\n  ${imports.join("\n  ")}`);
-      }
-    } catch {
-      // file may not exist at HEAD (new file)
-    }
-  }
-
-  return parts.join("\n\n");
-}

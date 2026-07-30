@@ -12,8 +12,8 @@ interface ModelDef {
 }
 
 const MODELS: ModelDef[] = [
-  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "ollama", mode: "offline", hint: "recommended", ollamaModel: "deepseek-v4-flash:latest" },
-  { id: "qwen3-coder", label: "Qwen3-Coder", provider: "ollama", mode: "offline", ollamaModel: "qwen3-coder:latest" },
+  { id: "qwen3-coder", label: "Qwen3-Coder", provider: "ollama", mode: "offline", hint: "recommended", ollamaModel: "qwen3-coder:latest" },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "ollama", mode: "offline", ollamaModel: "deepseek-v4-flash:latest" },
   { id: "gpt-5", label: "GPT-5", provider: "openai", mode: "remote", hint: "requires API key" },
   { id: "claude", label: "Claude", provider: "anthropic", mode: "remote", hint: "requires API key" },
 ];
@@ -49,7 +49,7 @@ export async function runSetup(force = false): Promise<void> {
 
   const selected = await p.select({
     message: "Select AI model:",
-    initialValue: "deepseek-v4-flash",
+    initialValue: "qwen3-coder",
     options: MODELS.map((m) => ({
       value: m.id,
       label: m.label,
