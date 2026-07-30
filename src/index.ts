@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { loadConfig } from "./config.js";
+import { loadConfig, saveConfig } from "./config.js";
+import type { Config } from "./config.js";
 import { runSetup } from "./setup.js";
 import { getWorkingTreeDiff, getStagedDiff, getCommitDiff } from "./git.js";
 import type { DiffResult } from "./git.js";
@@ -17,6 +18,95 @@ import {
   formatError,
   formatStats,
 } from "./output.js";
+import * as p from "@clack/prompts";
+
+async function runWithConfig(
+  config: Config,
+  opts: Record<string, unknown>,
+  commit?: string,
+): Promise<void> {
+  let result: DiffResult;
+  if (commit) {
+    result = getCommitDiff(commit);
+  } else if (opts.staged) {
+    result = getStagedDiff();
+  } else {
+    result = getWorkingTreeDiff();
+  }
+
+  const { diff, stats, commitInfo } = result;
+
+  if (stats.files === 0 || !diff.trim()) {
+    console.log("No changes detected.");
+    process.exit(0);
+  }
+
+  formatStats(stats.files, stats.insertions, stats.deletions);
+  const ctx = gatherContext(diff);
+
+  const maxLen = 15_000;
+  const truncated =
+    diff.length > maxLen
+      ? diff.slice(0, maxLen) + "\n\n... (diff truncated)"
+      : diff;
+
+  const detail: "short" | "full" = opts.full ? "full" : "short";
+
+  const llm = await createLLM(config);
+
+  if (opts.message) {
+    const { system, prompt } = buildCommitMessagePrompt(truncated, ctx);
+    const text = await llm.generate(prompt, system);
+    formatCommitMessage(text);
+  } else if (opts.risk) {
+    const { system, prompt } = buildRiskPrompt(truncated, ctx);
+    const text = await llm.generate(prompt, system);
+    formatRiskAnalysis(text);
+  } else {
+    const { system, prompt } = buildComprehensivePrompt(
+      truncated,
+      ctx,
+      commitInfo,
+    );
+    const text = await llm.generate(prompt, system);
+    formatComprehensive(text);
+  }
+}
+
+async function promptRemoteFallback(config: Config): Promise<Config | null> {
+  const switchModel = await p.confirm({
+    message:
+      "Ollama is not available. Would you like to switch to a remote model (GPT-5 or Claude)?",
+  });
+
+  if (p.isCancel(switchModel) || !switchModel) return null;
+
+  const choice = await p.select({
+    message: "Select remote model:",
+    options: [
+      { value: "openai", label: "GPT-5", hint: "requires OpenAI API key" },
+      { value: "anthropic", label: "Claude", hint: "requires Anthropic API key" },
+    ],
+  });
+
+  if (p.isCancel(choice)) return null;
+
+  const provider = choice as "openai" | "anthropic";
+  config.provider = provider;
+  config.mode = "remote";
+  config.model = provider === "openai" ? "gpt-5" : "claude-sonnet-4-20250514";
+
+  const key = await p.text({
+    message: `Enter your ${provider === "openai" ? "OpenAI" : "Anthropic"} API key:`,
+    validate: (v) => (v ? undefined : "API key is required"),
+  });
+
+  if (p.isCancel(key)) return null;
+  config.apiKeys[provider] = key as string;
+  saveConfig(config);
+
+  return config;
+}
 
 async function main() {
   const program = new Command();
@@ -39,13 +129,11 @@ async function main() {
   const opts = program.opts();
   const commit: string | undefined = program.args[0];
 
-  // Re-run setup if requested
   if (opts.setup) {
     await runSetup(true);
     return;
   }
 
-  // Load config, run setup if first time
   let config = loadConfig();
   if (!config) {
     await runSetup();
@@ -56,60 +144,36 @@ async function main() {
     }
   }
 
-  // Override mode/model from CLI flags
   if (opts.offline) config.mode = "offline";
   if (opts.model) config.model = opts.model;
 
   try {
-    let result: DiffResult;
-    if (commit) {
-      result = getCommitDiff(commit);
-    } else if (opts.staged) {
-      result = getStagedDiff();
-    } else {
-      result = getWorkingTreeDiff();
-    }
-
-    const { diff, stats, commitInfo } = result;
-
-    if (stats.files === 0 || !diff.trim()) {
-      console.log("No changes detected.");
-      process.exit(0);
-    }
-
-    formatStats(stats.files, stats.insertions, stats.deletions);
-
-    // Gather repository context
-    const ctx = gatherContext(diff);
-
-    const maxLen = 15_000;
-    const truncated =
-      diff.length > maxLen
-        ? diff.slice(0, maxLen) + "\n\n... (diff truncated)"
-        : diff;
-
-    const llm = await createLLM(config);
-
-    if (opts.message) {
-      const { system, prompt } = buildCommitMessagePrompt(truncated, ctx);
-      const text = await llm.generate(prompt, system);
-      formatCommitMessage(text);
-    } else if (opts.risk) {
-      const { system, prompt } = buildRiskPrompt(truncated, ctx);
-      const text = await llm.generate(prompt, system);
-      formatRiskAnalysis(text);
-    } else {
-      const { system, prompt } = buildComprehensivePrompt(
-        truncated,
-        ctx,
-        commitInfo,
-      );
-      const text = await llm.generate(prompt, system);
-      formatComprehensive(text);
-    }
+    await runWithConfig(config, opts, commit);
   } catch (err) {
-    formatError(err instanceof Error ? err.message : String(err));
-    process.exit(1);
+    const msg = err instanceof Error ? err.message : String(err);
+
+    // If offline/Ollama failed, offer to fallback to remote
+    if (config.mode === "offline" && config.provider === "ollama") {
+      formatError(msg);
+      console.log();
+      const updated = await promptRemoteFallback(config);
+      if (!updated) {
+        console.log("You can re-run setup with: git-explain --setup");
+        process.exit(1);
+      }
+      // Retry with new config
+      try {
+        await runWithConfig(updated, opts, commit);
+      } catch (retryErr) {
+        formatError(
+          retryErr instanceof Error ? retryErr.message : String(retryErr),
+        );
+        process.exit(1);
+      }
+    } else {
+      formatError(msg);
+      process.exit(1);
+    }
   }
 }
 

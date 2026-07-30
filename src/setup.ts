@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import * as p from "@clack/prompts";
 import { loadConfig, saveConfig, defaultConfig, configPath } from "./config.js";
+import type { Config } from "./config.js";
 
 interface ModelDef {
   id: string;
@@ -27,6 +28,29 @@ function checkInstalled(cmd: string): boolean {
   }
 }
 
+async function handleApiKey(config: Config, provider: "openai" | "anthropic"): Promise<void> {
+  const label = provider === "openai" ? "OpenAI" : "Anthropic";
+  const key = await p.text({
+    message: `Enter your ${label} API key:`,
+    validate: (v) => (v ? undefined : "API key is required"),
+  });
+  if (p.isCancel(key)) process.exit(0);
+  config.apiKeys[provider] = key as string;
+}
+
+async function promptFallbackModel(): Promise<ModelDef | null> {
+  const choice = await p.select({
+    message: "Ollama is not installed. Choose an alternative:",
+    options: [
+      { value: "gpt-5", label: "GPT-5", hint: "requires OpenAI API key" },
+      { value: "claude", label: "Claude", hint: "requires Anthropic API key" },
+      { value: "cancel", label: "Cancel setup" },
+    ],
+  });
+  if (p.isCancel(choice) || choice === "cancel") return null;
+  return MODELS.find((m) => m.id === choice)!;
+}
+
 export async function runSetup(force = false): Promise<void> {
   const existing = loadConfig();
   if (existing && !force) return;
@@ -47,22 +71,36 @@ export async function runSetup(force = false): Promise<void> {
     process.exit(1);
   }
 
-  const selected = await p.select({
-    message: "Select AI model:",
-    initialValue: "qwen3-coder",
-    options: MODELS.map((m) => ({
-      value: m.id,
-      label: m.label,
-      hint: m.hint,
-    })),
-  });
+  let modelDef: ModelDef | null = null;
 
-  if (p.isCancel(selected)) {
-    p.outro("Setup cancelled.");
-    process.exit(0);
+  while (!modelDef) {
+    const selected = await p.select({
+      message: "Select AI model:",
+      initialValue: "qwen3-coder",
+      options: MODELS.map((m) => ({
+        value: m.id,
+        label: m.label,
+        hint: m.hint,
+      })),
+    });
+
+    if (p.isCancel(selected)) {
+      p.outro("Setup cancelled.");
+      process.exit(0);
+    }
+
+    modelDef = MODELS.find((m) => m.id === selected)!;
+
+    // If offline model but no Ollama, offer fallback
+    if (modelDef.mode === "offline" && !hasOllama) {
+      modelDef = await promptFallbackModel();
+      if (!modelDef) {
+        p.outro("Setup cancelled.");
+        process.exit(0);
+      }
+    }
   }
 
-  const modelDef = MODELS.find((m) => m.id === selected)!;
   const config = existing || defaultConfig();
 
   config.mode = modelDef.mode;
@@ -70,14 +108,6 @@ export async function runSetup(force = false): Promise<void> {
   config.model = modelDef.ollamaModel || modelDef.id;
 
   if (modelDef.mode === "offline") {
-    if (!hasOllama) {
-      p.note(
-        "Ollama is required for offline models.\nInstall from https://ollama.com then run setup again.",
-        "Ollama not found",
-      );
-      process.exit(1);
-    }
-
     const spinner = p.spinner();
     spinner.start(`Downloading ${modelDef.label}...`);
     try {
@@ -88,31 +118,19 @@ export async function runSetup(force = false): Promise<void> {
       spinner.stop(`${modelDef.label} downloaded successfully`);
     } catch {
       spinner.stop("Download failed");
-      p.note(
-        `Run \`ollama pull ${modelDef.ollamaModel}\` manually and try again.`,
-        "Error",
-      );
-      process.exit(1);
+      const retry = await p.confirm({
+        message: `Failed to download ${modelDef.label}. Try again?`,
+      });
+      if (p.isCancel(retry) || !retry) {
+        p.outro(`Run \`ollama pull ${modelDef.ollamaModel}\` manually and run \`git-explain --setup\` to reconfigure.`);
+        process.exit(0);
+      }
+      return runSetup(force);
     }
   }
 
-  if (modelDef.provider === "openai") {
-    const key = await p.text({
-      message: "Enter your OpenAI API key:",
-      validate: (v) => (v ? undefined : "API key is required"),
-    });
-    if (p.isCancel(key)) process.exit(0);
-    config.apiKeys.openai = key as string;
-  }
-
-  if (modelDef.provider === "anthropic") {
-    const key = await p.text({
-      message: "Enter your Anthropic API key:",
-      validate: (v) => (v ? undefined : "API key is required"),
-    });
-    if (p.isCancel(key)) process.exit(0);
-    config.apiKeys.anthropic = key as string;
-  }
+  if (modelDef.provider === "openai") await handleApiKey(config, "openai");
+  if (modelDef.provider === "anthropic") await handleApiKey(config, "anthropic");
 
   saveConfig(config);
   p.outro(`Setup complete! Config saved to ${configPath()}`);

@@ -22,8 +22,10 @@ export class OllamaProvider implements LLMProvider {
   private async ensureModel(): Promise<void> {
     if (this.ready) return;
 
+    // Check if Ollama is reachable
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`);
+      if (!res.ok) throw new Error(`Ollama returned ${res.status}`);
       const data: TagsResponse = await res.json();
       const exists = data.models?.some(
         (m) => m.name === this.modelName,
@@ -33,9 +35,15 @@ export class OllamaProvider implements LLMProvider {
         return;
       }
     } catch {
-      // not reachable
+      throw new Error(
+        "Ollama is not running or not reachable.\n" +
+        "  Install: https://ollama.com\n" +
+        "  Start:   ollama serve\n" +
+        "  Or run git-explain --setup to switch to a remote model.",
+      );
     }
 
+    // Model not found locally — try to pull it
     console.log(`Downloading ${this.modelName} (this may take a while)...`);
     try {
       execSync(`ollama pull ${this.modelName}`, {
@@ -44,8 +52,11 @@ export class OllamaProvider implements LLMProvider {
       });
       this.ready = true;
     } catch {
-      console.error("Failed to download model. Is Ollama installed? https://ollama.com");
-      process.exit(1);
+      throw new Error(
+        `Failed to download ${this.modelName}.\n` +
+        `  Run manually: ollama pull ${this.modelName}\n` +
+        `  Or run git-explain --setup to switch to a remote model.`,
+      );
     }
   }
 
