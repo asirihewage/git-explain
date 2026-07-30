@@ -1,6 +1,6 @@
 {
     "name": "git-explain",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
     "bin": {
         "git-explain": "bin/git-explain.js"
@@ -8,10 +8,10 @@
     "type": "module",
     "files": [
         "dist",
-    "!dist/__tests__",
-    "bin",
-    "scripts",
-    "media",
+        "!dist/__tests__",
+        "bin",
+        "scripts",
+        "media",
         "README.md",
         "LICENSE"
     ],
