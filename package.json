@@ -1,0 +1,55 @@
+{
+  "name": "git-explain",
+  "version": "1.0.1",
+  "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
+  "bin": {
+    "git-explain": "bin/git-explain.js"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asirihewage/git-explain.git"
+  },
+  "homepage": "https://github.com/asirihewage/git-explain#readme",
+  "bugs": {
+    "url": "https://github.com/asirihewage/git-explain/issues"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "git",
+    "explain",
+    "ai",
+    "diff",
+    "code-review",
+    "ollama",
+    "commit-message",
+    "risk-analysis"
+  ],
+  "author": "Asiri Hewage",
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
