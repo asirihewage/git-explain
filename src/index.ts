@@ -1,4 +1,9 @@
 import { Command } from "commander";
+import { readFileSync } from "node:fs";
+
+const VERSION = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+).version;
 import { loadConfig, saveConfig } from "./config.js";
 import type { Config } from "./config.js";
 import { runSetup } from "./setup.js";
@@ -114,7 +119,7 @@ async function main() {
   program
     .name("git-explain")
     .description("AI-powered Git change explanations")
-    .version("1.0.0")
+    .version(VERSION)
     .option("--staged", "Explain staged changes")
     .option("-s, --short", "Short explanation (default)")
     .option("-f, --full", "Full detailed explanation")
