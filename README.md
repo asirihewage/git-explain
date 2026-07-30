@@ -5,7 +5,7 @@ Understand what changed, why it changed, and what risks it introduces — powere
 Instead of `+520 -380`, git-explain tells you _what actually changed_, infers _why_ from repository context, highlights _regressions_ and _affected modules_, and suggests _commit messages_, _PR descriptions_, and _test cases_.
 
 <p align="center">
-  <img src="media/demo.svg" alt="git-explain demo" width="720">
+  <img src="https://raw.githubusercontent.com/asirihewage/git-explain/main/media/demo.svg" alt="git-explain demo" width="720">
 </p>
 
 ## Installation
