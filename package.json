@@ -8,9 +8,10 @@
     "type": "module",
     "files": [
         "dist",
-        "!dist/__tests__",
-        "bin",
-        "scripts",
+    "!dist/__tests__",
+    "bin",
+    "scripts",
+    "media",
         "README.md",
         "LICENSE"
     ],
