@@ -1,6 +1,6 @@
 {
   "name": "git-explain",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
   "bin": {
     "git-explain": "bin/git-explain.js"
