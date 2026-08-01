@@ -1,6 +1,6 @@
 {
     "name": "git-explain",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
     "bin": {
         "git-explain": "bin/git-explain.js"
@@ -48,7 +48,6 @@
     "dependencies": {
         "@clack/prompts": "^1.7.0",
         "commander": "^15.0.0",
-        "git-explain": "^1.0.8",
         "picocolors": "^1.1.1"
     },
     "devDependencies": {
