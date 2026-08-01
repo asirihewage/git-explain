@@ -81,7 +81,7 @@ async function runWithConfig(
 async function promptRemoteFallback(config: Config): Promise<Config | null> {
   const switchModel = await p.confirm({
     message:
-      "Ollama is not available. Would you like to switch to a remote model (GPT-5 or Claude)?",
+      "Your local model provider is not available. Would you like to switch to a remote model (GPT-5 or Claude)?",
   });
 
   if (p.isCancel(switchModel) || !switchModel) return null;
@@ -157,8 +157,11 @@ async function main() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
 
-    // If offline/Ollama failed, offer to fallback to remote
-    if (config.mode === "offline" && config.provider === "ollama") {
+    // If offline/local provider failed, offer to fallback to remote
+    if (
+      config.mode === "offline" &&
+      (config.provider === "ollama" || config.provider === "llamacpp")
+    ) {
       formatError(msg);
       console.log();
       const updated = await promptRemoteFallback(config);

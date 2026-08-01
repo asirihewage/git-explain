@@ -10,6 +10,16 @@ export async function createLLM(config: Config): Promise<LLMProvider> {
     const { OllamaProvider } = await import("./ollama.js");
     return new OllamaProvider(config.model, config.ollamaUrl);
   }
+  if (config.provider === "llamacpp") {
+    const { LlamaCppProvider } = await import("./llamacpp.js");
+    const url =
+      process.env.LLAMACPP_URL || config.llamacppUrl || "http://127.0.0.1:8080";
+    return new LlamaCppProvider(config.model, url, {
+      modelPath: config.llamacppModelPath || undefined,
+      hfRepo: config.llamacppHfRepo || undefined,
+      hfFile: config.llamacppHfFile || undefined,
+    });
+  }
   if (config.provider === "anthropic") {
     const { AnthropicProvider } = await import("./anthropic.js");
     const provider = new AnthropicProvider(config.model);

@@ -1,6 +1,6 @@
 {
     "name": "git-explain",
-    "version": "1.0.11",
+    "version": "1.0.12",
     "description": "AI-powered Git change explanations — understand what changed, why, and the risks",
     "bin": {
         "git-explain": "bin/git-explain.js"
@@ -42,7 +42,9 @@
         "code-review",
         "ollama",
         "commit-message",
-        "risk-analysis"
+        "risk-analysis",
+        "llama.cpp",
+        "gguf"
     ],
     "author": "Asiri Hewage",
     "dependencies": {

@@ -6,14 +6,17 @@ import type { Config } from "./config.js";
 interface ModelDef {
   id: string;
   label: string;
-  provider: "ollama" | "openai" | "anthropic";
+  provider: "ollama" | "llamacpp" | "openai" | "anthropic";
   mode: "offline" | "remote";
   hint?: string;
   ollamaModel?: string;
 }
 
+const DEFAULT_LLAMACPP_URL = "http://127.0.0.1:8080";
+
 const MODELS: ModelDef[] = [
-  { id: "qwen3-coder", label: "Qwen3-Coder", provider: "ollama", mode: "offline", hint: "recommended", ollamaModel: "qwen3-coder:latest" },
+  { id: "llama-cpp", label: "Llama.cpp", provider: "llamacpp", mode: "offline" },
+  { id: "qwen3-coder", label: "Qwen3-Coder", provider: "ollama", mode: "offline", ollamaModel: "qwen3-coder:latest" },
   { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "ollama", mode: "offline", ollamaModel: "deepseek-v4-flash:latest" },
   { id: "gpt-5", label: "GPT-5", provider: "openai", mode: "remote", hint: "requires API key" },
   { id: "claude", label: "Claude", provider: "anthropic", mode: "remote", hint: "requires API key" },
@@ -40,7 +43,7 @@ async function handleApiKey(config: Config, provider: "openai" | "anthropic"): P
 
 async function promptFallbackModel(): Promise<ModelDef | null> {
   const choice = await p.select({
-    message: "Ollama is not installed. Choose an alternative:",
+    message: "No local model runtime is available. Choose an alternative:",
     options: [
       { value: "gpt-5", label: "GPT-5", hint: "requires OpenAI API key" },
       { value: "claude", label: "Claude", hint: "requires Anthropic API key" },
@@ -51,6 +54,54 @@ async function promptFallbackModel(): Promise<ModelDef | null> {
   return MODELS.find((m) => m.id === choice)!;
 }
 
+async function isLlamaCppReachable(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${url}/health`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function promptLlamaCppModelSource(config: Config): Promise<boolean> {
+  const source = await p.select({
+    message: "llama-server is not running. How should git-explain load the model?",
+    options: [
+      { value: "path", label: "Local GGUF file" },
+      { value: "hf", label: "Hugging Face repo (auto-download on first run)" },
+      { value: "cancel", label: "Cancel" },
+    ],
+  });
+  if (p.isCancel(source) || source === "cancel") return false;
+
+  if (source === "path") {
+    const modelPath = await p.text({
+      message: "Enter the path to your GGUF model file:",
+      validate: (v) => (v ? undefined : "Model path is required"),
+    });
+    if (p.isCancel(modelPath)) return false;
+    config.llamacppModelPath = modelPath as string;
+  } else {
+    const repo = await p.text({
+      message: "Hugging Face repo (e.g. ggml-org/gemma-1.1-2b-it-GGUF):",
+      validate: (v) => (v ? undefined : "Repo is required"),
+    });
+    if (p.isCancel(repo)) return false;
+    const file = await p.text({
+      message: "GGUF file in the repo (e.g. gemma-1.1-2b-it-Q4_K_M.gguf):",
+      validate: (v) => (v ? undefined : "File is required"),
+    });
+    if (p.isCancel(file)) return false;
+    config.llamacppHfRepo = repo as string;
+    config.llamacppHfFile = file as string;
+  }
+
+  p.note("git-explain will start llama-server automatically on next run", "○");
+  return true;
+}
+
 export async function runSetup(force = false): Promise<void> {
   const existing = loadConfig();
   if (existing && !force) return;
@@ -58,13 +109,17 @@ export async function runSetup(force = false): Promise<void> {
   p.intro("Welcome to Git Explain!");
 
   const hasGit = checkInstalled("git");
+  const hasLlamaCpp = checkInstalled("llama-server");
   const hasOllama = checkInstalled("ollama");
 
   if (hasGit) p.note("Git detected", "✓");
   else p.note("Git not found — install from https://git-scm.com", "✗");
 
+  if (hasLlamaCpp) p.note("Llama.cpp detected", "✓");
+  else p.note("Llama.cpp not found — install from https://github.com/ggml-org/llama.cpp (needed for Llama.cpp models)", "○");
+
   if (hasOllama) p.note("Ollama detected", "✓");
-  else p.note("Ollama not found — install from https://ollama.com (needed for offline models)", "○");
+  else p.note("Ollama not found — install from https://ollama.com (needed for Ollama models)", "○");
 
   if (!hasGit) {
     p.outro("Setup cancelled — Git is required.");
@@ -76,11 +131,16 @@ export async function runSetup(force = false): Promise<void> {
   while (!modelDef) {
     const selected = await p.select({
       message: "Select AI model:",
-      initialValue: "qwen3-coder",
+      initialValue: hasLlamaCpp ? "llama-cpp" : "qwen3-coder",
       options: MODELS.map((m) => ({
         value: m.id,
         label: m.label,
-        hint: m.hint,
+        hint:
+          m.id === "llama-cpp" && hasLlamaCpp
+            ? "recommended"
+            : m.id === "qwen3-coder" && !hasLlamaCpp
+              ? "recommended"
+              : m.hint,
       })),
     });
 
@@ -91,8 +151,8 @@ export async function runSetup(force = false): Promise<void> {
 
     modelDef = MODELS.find((m) => m.id === selected)!;
 
-    // If offline model but no Ollama, offer fallback
-    if (modelDef.mode === "offline" && !hasOllama) {
+    // If offline model but no compatible runtime, offer fallback
+    if (modelDef.mode === "offline" && !hasOllama && !hasLlamaCpp) {
       modelDef = await promptFallbackModel();
       if (!modelDef) {
         p.outro("Setup cancelled.");
@@ -107,7 +167,26 @@ export async function runSetup(force = false): Promise<void> {
   config.provider = modelDef.provider;
   config.model = modelDef.ollamaModel || modelDef.id;
 
-  if (modelDef.mode === "offline") {
+  if (modelDef.provider === "llamacpp") {
+    config.llamacppUrl = DEFAULT_LLAMACPP_URL;
+    config.model = "local-model";
+    if (!(await isLlamaCppReachable(config.llamacppUrl))) {
+      if (!hasLlamaCpp) {
+        modelDef = await promptFallbackModel();
+        if (!modelDef) {
+          p.outro("Setup cancelled.");
+          process.exit(0);
+        }
+        config.provider = modelDef.provider;
+        config.model = modelDef.ollamaModel || modelDef.id;
+      } else if (!(await promptLlamaCppModelSource(config))) {
+        p.outro("Setup cancelled.");
+        process.exit(0);
+      }
+    }
+  }
+
+  if (modelDef.provider === "ollama") {
     const spinner = p.spinner();
     spinner.start(`Downloading ${modelDef.label}...`);
     try {
