@@ -4,13 +4,9 @@ import { join } from "node:path";
 
 export interface Config {
   mode: "offline" | "remote";
-  provider: "ollama" | "llamacpp" | "openai" | "anthropic";
+  provider: "ollama" | "openai" | "anthropic";
   model: string;
   ollamaUrl: string;
-  llamacppUrl: string;
-  llamacppModelPath: string;
-  llamacppHfRepo: string;
-  llamacppHfFile: string;
   apiKeys: {
     openai: string;
     anthropic: string;
@@ -25,10 +21,6 @@ const DEFAULTS: Config = {
   provider: "ollama",
   model: "qwen3-coder:latest",
   ollamaUrl: "http://localhost:11434",
-  llamacppUrl: "http://127.0.0.1:8080",
-  llamacppModelPath: "",
-  llamacppHfRepo: "",
-  llamacppHfFile: "",
   apiKeys: { openai: "", anthropic: "" },
 };
 

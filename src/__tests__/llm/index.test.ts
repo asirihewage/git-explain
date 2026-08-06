@@ -24,19 +24,6 @@ describe("createLLM", () => {
     expect(llm.modelName).toBe("qwen3-coder:latest");
   });
 
-  it("creates LlamaCppProvider for llamacpp provider", async () => {
-    const cfg = makeConfig({
-      mode: "offline",
-      provider: "llamacpp",
-      model: "local-model",
-      llamacppModelPath: "models/qwen2.5-coder.gguf",
-    });
-
-    const { createLLM } = await import("../../llm/index.js");
-    const llm = await createLLM(cfg);
-    expect(llm.modelName).toBe("local-model");
-  });
-
   it("creates OpenAIProvider for remote openai provider", async () => {
     const cfg = makeConfig({
       mode: "remote",

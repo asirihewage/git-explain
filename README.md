@@ -23,18 +23,16 @@ $ git-explain
 
 Welcome to Git Explain!
   ✓ Git detected
-  ✓ Llama.cpp detected
   ✓ Ollama detected
 
 Select AI model:
-  1. Llama.cpp          (recommended)
-  2. Qwen3-Coder
-  3. DeepSeek V4 Flash
-  4. GPT-5              (requires API key)
-  5. Claude             (requires API key)
+  1. Qwen3-Coder       (recommended)
+  2. DeepSeek V4 Flash
+  3. GPT-5              (requires API key)
+  4. Claude             (requires API key)
 ```
 
-Local models run on your machine. Llama.cpp models load from a GGUF file or Hugging Face repo; Ollama models (Qwen3-Coder, DeepSeek V4 Flash) are downloaded automatically. git-explain detects Llama.cpp first, then Ollama.
+Local models run on your machine. Ollama models (Qwen3-Coder, DeepSeek V4 Flash) are downloaded automatically.
 
 ## Usage
 
@@ -125,13 +123,11 @@ Config is stored at `~/.git-explain/config.json`. Environment variables override
 | `OPENAI_API_KEY` | GPT-5 / OpenAI-compatible |
 | `ANTHROPIC_API_KEY` | Claude |
 | `OLLAMA_URL` | Custom Ollama endpoint (default: `http://localhost:11434`) |
-| `LLAMACPP_URL` | Custom llama.cpp server (default: `http://127.0.0.1:8080`) |
 
 ## Requirements
 
 - Node.js 18+
 - Git
-- Llama.cpp (for llama.cpp models) — https://github.com/ggml-org/llama.cpp
 - Ollama (for Ollama models)
 
 ## License

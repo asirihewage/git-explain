@@ -160,7 +160,7 @@ async function main() {
     // If offline/local provider failed, offer to fallback to remote
     if (
       config.mode === "offline" &&
-      (config.provider === "ollama" || config.provider === "llamacpp")
+      config.provider === "ollama"
     ) {
       formatError(msg);
       console.log();
