@@ -122,7 +122,7 @@ export async function runSetup(force = false): Promise<void> {
         message: `Failed to download ${modelDef.label}. Try again?`,
       });
       if (p.isCancel(retry) || !retry) {
-        p.outro(`Run \`ollama pull ${modelDef.ollamaModel}\` manually and run \`git-explain --setup\` to reconfigure.`);
+        p.outro(`Run \`ollama pull ${modelDef.ollamaModel}\` manually and run \`git explain --setup\` to reconfigure.`);
         process.exit(0);
       }
       return runSetup(force);

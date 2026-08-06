@@ -19,7 +19,7 @@ npm install -g git-explain
 On first run, the setup wizard walks you through selecting a model:
 
 ```
-$ git-explain
+$ git explain
 
 Welcome to Git Explain!
   ✓ Git detected
@@ -37,23 +37,23 @@ Local models run on your machine. Ollama models (Qwen3-Coder, DeepSeek V4 Flash)
 ## Usage
 
 ```bash
-git-explain                    # Full analysis of working tree changes
-git-explain --staged           # Staged changes
-git-explain HEAD               # Last commit
-git-explain abc1234            # Specific commit hash
+git explain                    # Full analysis of working tree changes
+git explain --staged           # Staged changes
+git explain HEAD               # Last commit
+git explain abc1234            # Specific commit hash
 
-git-explain -m                 # Commit message only
-git-explain -r                 # Risk analysis only
+git explain -m                 # Commit message only
+git explain -r                 # Risk analysis only
 
-git-explain --offline          # Force offline mode
-git-explain --model qwen3-coder:latest
-git-explain --setup            # Re-run setup wizard
+git explain --offline          # Force offline mode
+git explain --model qwen3-coder:latest
+git explain --setup            # Re-run setup wizard
 ```
 
 ## Sample Output
 
 ```
-$ git-explain --staged
+$ git explain --staged
 
   Files: 7   +36 / -51
 

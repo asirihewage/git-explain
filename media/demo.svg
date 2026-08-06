@@ -26,7 +26,7 @@
   <circle cx="58" cy="17" r="6" fill="#28c840"/>
 
   <!-- Title text -->
-  <text x="360" y="22" text-anchor="middle" fill="#8a8a9e" font-size="12">git-explain — git-explain --staged</text>
+  <text x="360" y="22" text-anchor="middle" fill="#8a8a9e" font-size="12">git explain — git explain --staged</text>
 
   <!-- Output -->
   <text x="24" y="62" fill="#565677" font-size="12">  Files: 7   +36 / -51</text>

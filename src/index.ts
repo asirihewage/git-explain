@@ -117,7 +117,7 @@ async function main() {
   const program = new Command();
 
   program
-    .name("git-explain")
+    .name("git explain")
     .description("AI-powered Git change explanations")
     .version(VERSION)
     .option("--staged", "Explain staged changes")
@@ -144,7 +144,7 @@ async function main() {
     await runSetup();
     config = loadConfig();
     if (!config) {
-      console.error("Setup failed. Run `git-explain --setup` to try again.");
+      console.error("Setup failed. Run `git explain --setup` to try again.");
       process.exit(1);
     }
   }
@@ -166,7 +166,7 @@ async function main() {
       console.log();
       const updated = await promptRemoteFallback(config);
       if (!updated) {
-        console.log("You can re-run setup with: git-explain --setup");
+        console.log("You can re-run setup with: git explain --setup");
         process.exit(1);
       }
       // Retry with new config

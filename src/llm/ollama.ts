@@ -39,7 +39,7 @@ export class OllamaProvider implements LLMProvider {
         "Ollama is not running or not reachable.\n" +
         "  Install: https://ollama.com\n" +
         "  Start:   ollama serve\n" +
-        "  Or run git-explain --setup to switch to a remote model.",
+        "  Or run git explain --setup to switch to a remote model.",
       );
     }
 
@@ -55,7 +55,7 @@ export class OllamaProvider implements LLMProvider {
       throw new Error(
         `Failed to download ${this.modelName}.\n` +
         `  Run manually: ollama pull ${this.modelName}\n` +
-        `  Or run git-explain --setup to switch to a remote model.`,
+        `  Or run git explain --setup to switch to a remote model.`,
       );
     }
   }
