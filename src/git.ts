@@ -23,16 +23,23 @@ export function getCommitDiff(commit: string): DiffResult {
   const commitInfo = headerEnd === -1 ? output.trim() : output.slice(0, headerEnd).trim();
   const diff = headerEnd === -1 ? "" : output.slice(headerEnd + 1);
 
-  return parseDiffResult(diff, commitInfo, false);
+  return parseDiffResult(diff, commitInfo, false, commit);
 }
 
-function parseDiffResult(diff: string, commitInfo: string, staged: boolean): DiffResult {
+function parseDiffResult(
+  diff: string,
+  commitInfo: string,
+  staged: boolean,
+  commit?: string,
+): DiffResult {
   if (!diff.trim()) {
     return { diff, stats: { files: 0, insertions: 0, deletions: 0 }, commitInfo };
   }
 
-  const args = ["diff", "--stat"];
-  if (staged) args.push("--staged");
+  const args = commit
+    ? ["show", commit, "--stat", "--format="]
+    : ["diff", "--stat"];
+  if (!commit && staged) args.push("--staged");
 
   try {
     const statsOutput = execFileSync("git", args, { encoding: "utf-8" });

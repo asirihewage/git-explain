@@ -87,8 +87,10 @@ index abc..def 100644
     const result = getCommitDiff("abc123def456");
 
     expect(mockExecFileSync).toHaveBeenCalledWith("git", ["show", "abc123def456", "--unified=10", "--format=commit %H%nAuthor: %an <%ae>%nDate:   %ad%n%n%s%n%b"], { encoding: "utf-8" });
+    expect(mockExecFileSync).toHaveBeenCalledWith("git", ["show", "abc123def456", "--stat", "--format="], { encoding: "utf-8" });
     expect(result.commitInfo).toContain("commit abc123def456");
     expect(result.commitInfo).toContain("feat: add feature");
     expect(result.diff).toContain("diff --git");
+    expect(result.stats.files).toBe(1);
   });
 });
